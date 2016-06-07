@@ -134,6 +134,9 @@
     set(tour_autorotation_pausecounter, 0);
     events.dispatch(onstartautorotation);
 
+    if(tour_autotourenabled,
+      resetautotourvariables();
+    );
   </action>
   <action name="stopautorotation">
     set(tour_autorotateenabled, false);
@@ -177,6 +180,9 @@
           set(autorotate.enabled, true);
           events.dispatch(onresumeautorotation);
 
+          if(tour_autotourenabled,
+            resetautotourvariables();
+          );
         );
       );
     ,
@@ -194,16 +200,61 @@
 
   <!-- AUTOTOUR -->
 
+  <krpano autotourdelay="5" />
   <action name="startautotour">
     set(tour_autotourenabled, true);startautorotation();
 
     events.dispatch(onstartautotour);
+    resetautotourvariables();
   </action>
 
+  <action name="resetautotourvariables">
+    stopautotourtimer();
+    if (scene[get(xml.scene)].planar,
+      set(autotourdelay, 10);
+    ,
+
+      set(autotour_amax,1);Math.abs(autotour_vmax, autorotate.speed);if (autotour_vmax == 0, set(autotour_vmax, 5));sub(autotour_xmax, view.hlookatmax, view.hlookatmin);
+
+      if(autotour_xmax LT 360,set(autotour_partial,true);mul(autotour_xmax,2););
+
+      div(t1,autotour_xmax,autotour_vmax);div(t2,autotour_vmax,autotour_amax);mul(t2,0.5);add(autotourdelay,t1,t2);if(autotour_partial,mul(autotourdelay,2););
+
+      mul(autotour_test,autotour_amax,0.5);Math.pow(autotour_test2,autotour_vmax,2);Math.pow(autotour_test3,autotour_amax,2);div(autotour_test2,autotour_test3);mul(autotour_test,autotour_test2);if(autotour_partial,mul(autotour_test,2););
+      if(autotour_xmax LT autotour_test,set(autotourdelay, 0);div(t1,autotour_xmax,autotour_amax);mul(t1,2);Math.sqrt(autotourdelay,t1);if(autotour_partial,mul(autotourdelay,2);););
+      
+      add(autotourdelay, autorotate.waittime);
+    );
+    delayedcall(autotour_call_id, get(autotourdelay), autotourtimer);
+  </action>
   <action name="stopautotour">
-    set(tour_autotourenabled, false);stopautorotation();
+    set(tour_autotourenabled, false);
+    stopautotourtimer();stopautorotation();
 
     events.dispatch(onstopautotour);
+  </action>
+  <action name="autotourtimer">
+    if (tour_autotourenabled,
+      if (tour_autorotateenabled,
+        if (autorotate.enabled,loadNextScene();
+
+        );
+      );
+    );
+  </action>
+  <action name="stopautotourtimer">
+    stopdelayedcall(autotour_call_id);
+  </action>
+  <events name="autotourevents"
+          onnewpano="autotouronnewpanoaction"
+          onmousedown="autotouronuseraction"
+          onkeydown="autotouronuseraction"
+          keep="true"/>
+  <action name="autotouronnewpanoaction">
+    if (tour_autotourenabled,resetautotourvariables(););
+  </action>
+  <action name="autotouronuseraction">
+    if (tour_autotourenabled,resetautotourvariables(););
   </action>
 
 
